@@ -2,6 +2,9 @@ console.log("Welcome to Asteroid!");
 
 const { generateGroceryList } = require("./src/services/mealPlanService");
 const {
+  categorizeIngredients,
+} = require("./src/services/ingredientCategorizer");
+const {
   displayGroceryList,
   saveGroceryList,
 } = require("./src/utils/displayUtils");
@@ -27,18 +30,25 @@ function processArguments() {
   return weekNumber;
 }
 
-try {
-  const weekNumber = processArguments();
-  const groceryList = generateGroceryList(weekNumber);
+async function main() {
+  try {
+    const weekNumber = processArguments();
+    const groceryList = generateGroceryList(weekNumber);
 
-  // Display in console
-  displayGroceryList(groceryList);
+    // Categorize the ingredients
+    const categorizedList = await categorizeIngredients(groceryList);
 
-  // Save to file
-  const filename = `grocery_list_week_${weekNumber}.txt`;
-  saveGroceryList(groceryList, filename);
-  console.log(`\nGrocery list has been saved to ${filename}`);
-} catch (error) {
-  console.error("Error:", error.message);
-  process.exit(1);
+    // Display in console
+    displayGroceryList(categorizedList);
+
+    // Save to file
+    const filename = `grocery_list_week_${weekNumber}.txt`;
+    saveGroceryList(categorizedList, filename);
+    console.log(`\nGrocery list has been saved to ${filename}`);
+  } catch (error) {
+    console.error("Error:", error.message);
+    process.exit(1);
+  }
 }
+
+main();

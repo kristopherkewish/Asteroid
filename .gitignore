@@ -131,3 +131,6 @@ dist
 
 # CSV files
 *.csv
+
+# TXT files
+*.txt

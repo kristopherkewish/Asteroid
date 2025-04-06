@@ -1,6 +1,7 @@
 {
   "name": "asteroid",
   "version": "1.0.0",
+  "description": "Meal planning and grocery list generator",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -10,9 +11,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "csv-parse": "^5.5.3"
+    "csv-parse": "^5.5.3",
+    "@huggingface/inference": "^2.6.4",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "jest": "^29.7.0"
