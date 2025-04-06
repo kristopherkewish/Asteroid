@@ -6,7 +6,6 @@ Asteroid is a Node.js application that helps you generate organized grocery list
 
 - Node.js (v14 or higher)
 - npm (comes with Node.js)
-- A Hugging Face API key
 
 ## Installation
 
@@ -30,6 +29,12 @@ npm install
 
    ```
    HUGGINGFACE_API_KEY=your_api_key_here
+   ```
+
+   - Add your OpenAI API key:
+
+   ```
+   OPENAI_API_KEY=your_api_key_here
    ```
 
 4. Create your input files:
@@ -130,7 +135,7 @@ npm run test:watch
 ## Dependencies
 
 - csv-parse: For parsing CSV files
-- @huggingface/inference: For AI-powered ingredient categorization
+- openai: For AI-powered ingredient categorization
 - dotenv: For environment variable management
 - jest: For testing
 

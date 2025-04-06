@@ -13,8 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "csv-parse": "^5.5.3",
-    "@huggingface/inference": "^2.6.4",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "openai": "^4.91.1"
   },
   "devDependencies": {
     "jest": "^29.7.0"

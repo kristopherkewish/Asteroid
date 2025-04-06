@@ -1,21 +1,31 @@
 const {
   categorizeIngredients,
 } = require("../../src/services/ingredientCategorizer");
-const { HfInference } = require("@huggingface/inference");
 
-// Mock the HfInference module
-jest.mock("@huggingface/inference", () => {
-  const mockTextGeneration = jest.fn();
+// Mock the OpenAI module
+jest.mock("openai", () => {
+  const mockCreate = jest.fn();
   return {
-    HfInference: jest.fn().mockImplementation(() => ({
-      textGeneration: mockTextGeneration,
+    default: jest.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate,
+        },
+      },
     })),
-    mockTextGeneration, // Export the mock function for direct access
+    OpenAI: jest.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate,
+        },
+      },
+    })),
+    mockCreate, // Export the mock function for direct access
   };
 });
 
 // Get direct access to the mock function
-const { mockTextGeneration } = require("@huggingface/inference");
+const { mockCreate } = require("openai");
 
 describe("ingredientCategorizer", () => {
   beforeEach(() => {
@@ -34,17 +44,21 @@ describe("ingredientCategorizer", () => {
         "Frozen peas": 150,
       };
 
-      const mockResponse = {
-        generated_text: `{
-          "Meat": ["Salmon"],
-          "Dairy": ["Yoghurt"],
-          "Aisles": ["Bread", "Peanut butter"],
-          "Veg": ["Broccoli"],
-          "Frozen": ["Frozen peas"]
-        }`,
-      };
-
-      mockTextGeneration.mockResolvedValue(mockResponse);
+      mockCreate.mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: `{
+                "Meat": ["Salmon"],
+                "Dairy": ["Yoghurt"],
+                "Aisles": ["Bread", "Peanut butter"],
+                "Veg": ["Broccoli"],
+                "Frozen": ["Frozen peas"]
+              }`,
+            },
+          },
+        ],
+      });
 
       // Execute
       const result = await categorizeIngredients(ingredientQuantities);
@@ -71,15 +85,22 @@ describe("ingredientCategorizer", () => {
       });
 
       // Verify the prompt was constructed correctly
-      expect(mockTextGeneration).toHaveBeenCalledTimes(1);
-      expect(mockTextGeneration).toHaveBeenCalledWith({
-        model: "mistralai/Mistral-7B-Instruct-v0.2",
-        inputs: expect.stringContaining("Categorize these ingredients"),
-        parameters: {
-          max_new_tokens: 500,
-          temperature: 0.3,
-          return_full_text: false,
-        },
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate).toHaveBeenCalledWith({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a helpful assistant that categorizes ingredients into grocery store sections. Always respond with valid JSON.",
+          },
+          {
+            role: "user",
+            content: expect.stringContaining("Categorize these ingredients"),
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
       });
     });
 
@@ -94,43 +115,52 @@ describe("ingredientCategorizer", () => {
         "Frozen peas": 150,
       };
 
-      // First attempt misses some ingredients
-      const firstMockResponse = {
-        generated_text: `{
-          "Meat": ["Salmon"],
-          "Dairy": ["Yoghurt"],
-          "Aisles": ["Bread"],
-          "Veg": [],
-          "Frozen": []
-        }`,
-      };
-
-      // Second attempt categorizes some more ingredients
-      const secondMockResponse = {
-        generated_text: `{
-          "Meat": [],
-          "Dairy": [],
-          "Aisles": ["Peanut butter"],
-          "Veg": ["Broccoli"],
-          "Frozen": []
-        }`,
-      };
-
-      // Third attempt categorizes the last ingredient
-      const thirdMockResponse = {
-        generated_text: `{
-          "Meat": [],
-          "Dairy": [],
-          "Aisles": [],
-          "Veg": [],
-          "Frozen": ["Frozen peas"]
-        }`,
-      };
-
-      mockTextGeneration
-        .mockResolvedValueOnce(firstMockResponse)
-        .mockResolvedValueOnce(secondMockResponse)
-        .mockResolvedValueOnce(thirdMockResponse);
+      mockCreate
+        .mockResolvedValueOnce({
+          choices: [
+            {
+              message: {
+                content: `{
+                  "Meat": ["Salmon"],
+                  "Dairy": ["Yoghurt"],
+                  "Aisles": ["Bread"],
+                  "Veg": [],
+                  "Frozen": []
+                }`,
+              },
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          choices: [
+            {
+              message: {
+                content: `{
+                  "Meat": [],
+                  "Dairy": [],
+                  "Aisles": ["Peanut butter"],
+                  "Veg": ["Broccoli"],
+                  "Frozen": []
+                }`,
+              },
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          choices: [
+            {
+              message: {
+                content: `{
+                  "Meat": [],
+                  "Dairy": [],
+                  "Aisles": [],
+                  "Veg": [],
+                  "Frozen": ["Frozen peas"]
+                }`,
+              },
+            },
+          ],
+        });
 
       // Execute
       const result = await categorizeIngredients(ingredientQuantities);
@@ -157,7 +187,7 @@ describe("ingredientCategorizer", () => {
       });
 
       // Verify all three attempts were made
-      expect(mockTextGeneration).toHaveBeenCalledTimes(3);
+      expect(mockCreate).toHaveBeenCalledTimes(3);
     });
 
     it("should add uncategorized ingredients to Uncategorized category after 3 attempts", async () => {
@@ -172,18 +202,21 @@ describe("ingredientCategorizer", () => {
         "Mystery Ingredient": 50,
       };
 
-      // All attempts miss "Mystery Ingredient"
-      const mockResponse = {
-        generated_text: `{
-          "Meat": ["Salmon"],
-          "Dairy": ["Yoghurt"],
-          "Aisles": ["Bread", "Peanut butter"],
-          "Veg": ["Broccoli"],
-          "Frozen": ["Frozen peas"]
-        }`,
-      };
-
-      mockTextGeneration.mockResolvedValue(mockResponse);
+      mockCreate.mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: `{
+                "Meat": ["Salmon"],
+                "Dairy": ["Yoghurt"],
+                "Aisles": ["Bread", "Peanut butter"],
+                "Veg": ["Broccoli"],
+                "Frozen": ["Frozen peas"]
+              }`,
+            },
+          },
+        ],
+      });
 
       // Execute
       const result = await categorizeIngredients(ingredientQuantities);
@@ -212,24 +245,28 @@ describe("ingredientCategorizer", () => {
       });
 
       // Verify three attempts were made
-      expect(mockTextGeneration).toHaveBeenCalledTimes(3);
+      expect(mockCreate).toHaveBeenCalledTimes(3);
     });
 
     it("should handle empty ingredient list", async () => {
       // Setup
       const ingredientQuantities = {};
 
-      const mockResponse = {
-        generated_text: `{
-          "Meat": [],
-          "Dairy": [],
-          "Aisles": [],
-          "Veg": [],
-          "Frozen": []
-        }`,
-      };
-
-      mockTextGeneration.mockResolvedValue(mockResponse);
+      mockCreate.mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: `{
+                "Meat": [],
+                "Dairy": [],
+                "Aisles": [],
+                "Veg": [],
+                "Frozen": []
+              }`,
+            },
+          },
+        ],
+      });
 
       // Execute
       const result = await categorizeIngredients(ingredientQuantities);
@@ -251,7 +288,7 @@ describe("ingredientCategorizer", () => {
         Salmon: 120,
       };
 
-      mockTextGeneration.mockRejectedValue(new Error("API Error"));
+      mockCreate.mockRejectedValue(new Error("API Error"));
 
       // Execute and Verify
       await expect(categorizeIngredients(ingredientQuantities)).rejects.toThrow(
@@ -265,11 +302,15 @@ describe("ingredientCategorizer", () => {
         Salmon: 120,
       };
 
-      const mockResponse = {
-        generated_text: "Invalid JSON response",
-      };
-
-      mockTextGeneration.mockResolvedValue(mockResponse);
+      mockCreate.mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: "Invalid JSON response",
+            },
+          },
+        ],
+      });
 
       // Execute and Verify
       await expect(categorizeIngredients(ingredientQuantities)).rejects.toThrow(

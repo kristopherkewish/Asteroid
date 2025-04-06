@@ -1,7 +1,9 @@
 require("dotenv").config();
-const { HfInference } = require("@huggingface/inference");
+const { OpenAI } = require("openai");
 
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /**
  * Makes a request to the AI model to categorize ingredients
@@ -27,22 +29,29 @@ async function requestCategorization(ingredients) {
     "Frozen": ["ingredient1", "ingredient2"]
   }`;
 
-  const response = await hf.textGeneration({
-    model: "mistralai/Mistral-7B-Instruct-v0.2",
-    inputs: prompt,
-    parameters: {
-      max_new_tokens: 500,
-      temperature: 0.3,
-      return_full_text: false,
-    },
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a helpful assistant that categorizes ingredients into grocery store sections. Always respond with valid JSON.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.3,
+    max_tokens: 500,
   });
 
-  const jsonMatch = response.generated_text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
+  const jsonResponse = response.choices[0].message.content;
+  try {
+    return JSON.parse(jsonResponse);
+  } catch (error) {
     throw new Error("Failed to parse JSON response from model");
   }
-
-  return JSON.parse(jsonMatch[0]);
 }
 
 /**
