@@ -24,11 +24,19 @@ npm install
 ```
 
 3. Set up environment variables:
+
    - Create a `.env` file in the root directory
    - Add your Hugging Face API key:
+
    ```
    HUGGINGFACE_API_KEY=your_api_key_here
    ```
+
+4. Create your input files:
+   - Create a `RecipeDatabase.csv` file in the root directory with your recipes (see CSV File Structure section for format)
+   - Create a meal plan file named `MPInputW<week_number>.csv` (e.g., `MPInputW4.csv` for week 4) in the root directory
+   - Both files must follow the exact CSV structure described below
+   - The meal names in your meal plan must exactly match those in your RecipeDatabase.csv
 
 ## Usage
 
@@ -57,14 +65,16 @@ The application will:
   - `services/` - Core business logic
   - `utils/` - Utility functions
 - `tests/` - Test files
-- `RecipeDatabase.csv` - Database of recipes
-- `MPInputW4.csv` - Sample meal plan input
+- `RecipeDatabase.csv` - Your recipe database (must be created by you)
+- `MPInputW<week_number>.csv` - Your meal plan for a specific week (must be created by you)
 
 ## CSV File Structure
 
-### Meal Plan Input (MPInputW4.csv)
+### Meal Plan Input (MPInputW<week_number>.csv)
 
-The meal plan CSV file should follow this structure:
+The meal plan CSV file must be named `MPInputW<week_number>.csv` where `<week_number>` is the week number you want to plan for (e.g., `MPInputW4.csv` for week 4).
+
+The file should follow this structure:
 
 ```csv
 Day,Meal
@@ -78,7 +88,9 @@ Monday,Meal Name 2
 
 ### Recipe Database (RecipeDatabase.csv)
 
-The recipe database CSV file should follow this structure:
+The recipe database CSV file must be named exactly `RecipeDatabase.csv` and placed in the root directory.
+
+The file should follow this structure:
 
 ```csv
 Meal,Ingredients,AmountPerServe
