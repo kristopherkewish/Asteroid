@@ -2,6 +2,8 @@ console.log("Welcome to Asteroid!");
 
 const fs = require("fs");
 const { parse } = require("csv-parse/sync");
+const { generateGroceryList } = require("./src/services/mealPlanService");
+const { displayGroceryList } = require("./src/utils/displayUtils");
 
 // Function to read and parse CSV file
 function readCSV(filePath) {
@@ -45,42 +47,32 @@ function calculateIngredients(mealCounts, recipeDB) {
   return ingredientQuantities;
 }
 
-// Main function to process the files
-function generateGroceryList(weekNumber) {
-  try {
-    // Read the CSV files
-    const mealPlan = readCSV(`MPInputW${weekNumber}.csv`);
-    const recipeDB = readCSV("RecipeDatabase.csv");
-
-    // Count meal occurrences
-    const mealCounts = countMeals(mealPlan);
-
-    // Calculate ingredient quantities
-    const ingredientQuantities = calculateIngredients(mealCounts, recipeDB);
-
-    // Print the grocery list
-    console.log("\nGrocery List:");
-    console.log("-------------");
-    for (const [ingredient, quantity] of Object.entries(ingredientQuantities)) {
-      console.log(`${ingredient}: ${quantity.toFixed(2)}`);
-    }
-  } catch (error) {
-    console.error("Error processing files:", error.message);
+/**
+ * Validates and processes command line arguments
+ * @returns {number} Week number
+ */
+function processArguments() {
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    console.error("Please provide a week number as an argument");
+    console.log("Usage: npm start <week_number>");
+    process.exit(1);
   }
+
+  const weekNumber = parseInt(args[0]);
+  if (isNaN(weekNumber)) {
+    console.error("Week number must be a valid number");
+    process.exit(1);
+  }
+
+  return weekNumber;
 }
 
-// Get week number from command line arguments
-const args = process.argv.slice(2);
-if (args.length === 0) {
-  console.error("Please provide a week number as an argument");
-  console.log("Usage: npm start <week_number>");
+try {
+  const weekNumber = processArguments();
+  const groceryList = generateGroceryList(weekNumber);
+  displayGroceryList(groceryList);
+} catch (error) {
+  console.error("Error:", error.message);
   process.exit(1);
 }
-
-const weekNumber = parseInt(args[0]);
-if (isNaN(weekNumber)) {
-  console.error("Week number must be a valid number");
-  process.exit(1);
-}
-
-generateGroceryList(weekNumber);
