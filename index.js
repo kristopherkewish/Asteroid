@@ -1,7 +1,10 @@
 console.log("Welcome to Asteroid!");
 
 const { generateGroceryList } = require("./src/services/mealPlanService");
-const { displayGroceryList } = require("./src/utils/displayUtils");
+const {
+  displayGroceryList,
+  saveGroceryList,
+} = require("./src/utils/displayUtils");
 
 /**
  * Validates and processes command line arguments
@@ -27,7 +30,14 @@ function processArguments() {
 try {
   const weekNumber = processArguments();
   const groceryList = generateGroceryList(weekNumber);
+
+  // Display in console
   displayGroceryList(groceryList);
+
+  // Save to file
+  const filename = `grocery_list_week_${weekNumber}.txt`;
+  saveGroceryList(groceryList, filename);
+  console.log(`\nGrocery list has been saved to ${filename}`);
 } catch (error) {
   console.error("Error:", error.message);
   process.exit(1);
