@@ -16,82 +16,154 @@ describe("displayUtils", () => {
   });
 
   describe("displayGroceryList", () => {
-    it("should display grocery list correctly", () => {
+    it("should display categorized grocery list correctly", () => {
       // Setup
-      const ingredientQuantities = {
-        Bread: 4,
-        "Peanut butter": 30,
-        Salmon: 120,
+      const categorizedIngredients = {
+        Meat: {
+          Salmon: 120,
+        },
+        Dairy: {
+          Yoghurt: 200,
+        },
+        Aisles: {
+          Bread: 4,
+          "Peanut butter": 30,
+        },
+        Veg: {},
+        Frozen: {},
       };
 
       // Execute
-      displayGroceryList(ingredientQuantities);
+      displayGroceryList(categorizedIngredients);
 
       // Verify
       expect(console.log).toHaveBeenCalledTimes(1);
       const output = console.log.mock.calls[0][0];
-      expect(output).toContain("Grocery List:");
-      expect(output).toContain("-------------");
+      expect(output).toContain(
+        "Grocery List (Categorized by Woolworths Section):"
+      );
+      expect(output).toContain("---------------------------------------------");
+      expect(output).toContain("Meat:");
+      expect(output).toContain("Salmon: 120.00");
+      expect(output).toContain("Dairy:");
+      expect(output).toContain("Yoghurt: 200.00");
+      expect(output).toContain("Aisles:");
       expect(output).toContain("Bread: 4.00");
       expect(output).toContain("Peanut butter: 30.00");
-      expect(output).toContain("Salmon: 120.00");
-      expect(output.split("\n").length).toBe(5); // header + separator + 3 items
+      expect(output).toContain("Veg:");
+      expect(output).toContain("None");
+      expect(output).toContain("Frozen:");
+      expect(output).toContain("None");
     });
 
     it("should handle empty grocery list", () => {
       // Setup
-      const ingredientQuantities = {};
+      const categorizedIngredients = {
+        Meat: {},
+        Dairy: {},
+        Aisles: {},
+        Veg: {},
+        Frozen: {},
+      };
 
       // Execute
-      displayGroceryList(ingredientQuantities);
+      displayGroceryList(categorizedIngredients);
 
       // Verify
       expect(console.log).toHaveBeenCalledTimes(1);
       const output = console.log.mock.calls[0][0];
-      expect(output).toContain("Grocery List:");
-      expect(output).toContain("-------------");
-      expect(output.split("\n").length).toBe(3); // header + separator + empty line
+      expect(output).toContain(
+        "Grocery List (Categorized by Woolworths Section):"
+      );
+      expect(output).toContain("---------------------------------------------");
+      expect(output).toContain("Meat:");
+      expect(output).toContain("None");
+      expect(output).toContain("Dairy:");
+      expect(output).toContain("None");
+      expect(output).toContain("Aisles:");
+      expect(output).toContain("None");
+      expect(output).toContain("Veg:");
+      expect(output).toContain("None");
+      expect(output).toContain("Frozen:");
+      expect(output).toContain("None");
     });
   });
 
   describe("saveGroceryList", () => {
-    it("should save grocery list to file", () => {
+    it("should save categorized grocery list to file", () => {
       // Setup
-      const ingredientQuantities = {
-        Bread: 4,
-        "Peanut butter": 30,
+      const categorizedIngredients = {
+        Meat: {
+          Salmon: 120,
+        },
+        Dairy: {
+          Yoghurt: 200,
+        },
+        Aisles: {
+          Bread: 4,
+          "Peanut butter": 30,
+        },
+        Veg: {},
+        Frozen: {},
       };
       const filename = "test_grocery_list.txt";
 
       // Execute
-      saveGroceryList(ingredientQuantities, filename);
+      saveGroceryList(categorizedIngredients, filename);
 
       // Verify
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         filename,
-        expect.stringContaining("Grocery List:")
+        expect.stringContaining(
+          "Grocery List (Categorized by Woolworths Section):"
+        )
       );
       const savedContent = fs.writeFileSync.mock.calls[0][1];
+      expect(savedContent).toContain("Meat:");
+      expect(savedContent).toContain("Salmon: 120.00");
+      expect(savedContent).toContain("Dairy:");
+      expect(savedContent).toContain("Yoghurt: 200.00");
+      expect(savedContent).toContain("Aisles:");
       expect(savedContent).toContain("Bread: 4.00");
       expect(savedContent).toContain("Peanut butter: 30.00");
-      expect(savedContent.split("\n").length).toBe(4); // header + separator + 2 items
+      expect(savedContent).toContain("Veg:");
+      expect(savedContent).toContain("None");
+      expect(savedContent).toContain("Frozen:");
+      expect(savedContent).toContain("None");
     });
 
     it("should handle empty grocery list when saving", () => {
       // Setup
-      const ingredientQuantities = {};
+      const categorizedIngredients = {
+        Meat: {},
+        Dairy: {},
+        Aisles: {},
+        Veg: {},
+        Frozen: {},
+      };
       const filename = "empty_grocery_list.txt";
 
       // Execute
-      saveGroceryList(ingredientQuantities, filename);
+      saveGroceryList(categorizedIngredients, filename);
 
       // Verify
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         filename,
-        expect.stringContaining("Grocery List:")
+        expect.stringContaining(
+          "Grocery List (Categorized by Woolworths Section):"
+        )
       );
       const savedContent = fs.writeFileSync.mock.calls[0][1];
-      expect(savedContent.split("\n").length).toBe(3); // header + separator + empty line
+      expect(savedContent).toContain("Meat:");
+      expect(savedContent).toContain("None");
+      expect(savedContent).toContain("Dairy:");
+      expect(savedContent).toContain("None");
+      expect(savedContent).toContain("Aisles:");
+      expect(savedContent).toContain("None");
+      expect(savedContent).toContain("Veg:");
+      expect(savedContent).toContain("None");
+      expect(savedContent).toContain("Frozen:");
+      expect(savedContent).toContain("None");
     });
   });
 });

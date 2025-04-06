@@ -7,7 +7,7 @@ const fs = require("fs");
  * @returns {string} Formatted category section
  */
 function formatCategory(category, ingredients) {
-  let output = `\n${category}:\n`;
+  let output = `\n\n${category}:\n`;
   output += "-".repeat(category.length + 1) + "\n";
 
   if (Object.keys(ingredients).length === 0) {
